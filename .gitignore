@@ -1,0 +1,13 @@
+.idea/
+.venv/
+.cache/
+Ultralytics/
+__pycache__/
+*.py[cod]
+
+# Runtime outputs and downloaded model artifacts
+runs/
+*.pt
+*.onnx
+*.engine
+
