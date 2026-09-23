@@ -1,0 +1,226 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1080" viewBox="0 0 1600 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Gesture-Guided Object Filter 시스템 설계도</title>
+  <desc id="desc">웹캠 입력, MediaPipe 손 추적, 제스처 기반 ROI, YOLO 객체 탐지, 필터 합성, 실시간 출력으로 이어지는 시스템 아키텍처와 확장 계획</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07111f"/>
+      <stop offset="1" stop-color="#111a31"/>
+    </linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#72e6d1"/>
+      <stop offset="0.55" stop-color="#85a7ff"/>
+      <stop offset="1" stop-color="#d595ff"/>
+    </linearGradient>
+    <linearGradient id="outputGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1d4d67"/>
+      <stop offset="1" stop-color="#223568"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000814" flood-opacity="0.35"/>
+    </filter>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8da2c4"/>
+    </marker>
+    <marker id="arrowMint" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#72e6d1"/>
+    </marker>
+    <style>
+      .title { font: 800 36px Pretendard, 'Noto Sans KR', Arial, sans-serif; fill: #f6f8ff; letter-spacing: -0.6px; }
+      .subtitle { font: 500 16px Pretendard, 'Noto Sans KR', Arial, sans-serif; fill: #91a1be; }
+      .section { font: 700 13px Pretendard, 'Noto Sans KR', Arial, sans-serif; fill: #9dafce; letter-spacing: 1.3px; }
+      .nodeTitle { font: 750 18px Pretendard, 'Noto Sans KR', Arial, sans-serif; fill: #f6f8ff; }
+      .nodeBody { font: 500 13px Pretendard, 'Noto Sans KR', Arial, sans-serif; fill: #9facbf; }
+      .small { font: 600 12px Pretendard, 'Noto Sans KR', Arial, sans-serif; fill: #8293b0; }
+      .chip { font: 700 11px Pretendard, 'Noto Sans KR', Arial, sans-serif; letter-spacing: .4px; }
+      .node { fill: #121f34; stroke: #30415f; stroke-width: 1.5; rx: 16; filter: url(#shadow); }
+      .nodeMint { fill: #102932; stroke: #3c9d91; stroke-width: 1.5; rx: 16; filter: url(#shadow); }
+      .nodeBlue { fill: #17253f; stroke: #5678bd; stroke-width: 1.5; rx: 16; filter: url(#shadow); }
+      .nodePurple { fill: #241d3d; stroke: #8467bd; stroke-width: 1.5; rx: 16; filter: url(#shadow); }
+      .nodeOutput { fill: url(#outputGlow); stroke: #72e6d1; stroke-width: 2; rx: 18; filter: url(#shadow); }
+      .future { fill: #111a2b; stroke: #52617c; stroke-width: 1.4; stroke-dasharray: 7 7; rx: 14; }
+      .flow { fill: none; stroke: #8da2c4; stroke-width: 2; marker-end: url(#arrow); }
+      .flowMint { fill: none; stroke: #72e6d1; stroke-width: 2.3; marker-end: url(#arrowMint); }
+      .flowFuture { fill: none; stroke: #677793; stroke-width: 1.7; stroke-dasharray: 6 7; marker-end: url(#arrow); }
+      .divider { stroke: #263550; stroke-width: 1; stroke-dasharray: 4 7; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1080" fill="url(#bg)"/>
+  <circle cx="1450" cy="90" r="180" fill="#5d45a8" opacity="0.10"/>
+  <circle cx="80" cy="1010" r="260" fill="#16796f" opacity="0.08"/>
+
+  <rect x="62" y="46" width="8" height="74" rx="4" fill="url(#hero)"/>
+  <text id="titleText" x="94" y="78" class="title">Gesture-Guided Object Filter</text>
+  <text x="94" y="108" class="subtitle">손 제스처로 ROI를 지정하고, 선택된 객체에만 실시간 영상 필터를 적용하는 로컬 CV 파이프라인</text>
+  <g transform="translate(1268 57)">
+    <rect width="258" height="42" rx="21" fill="#14283a" stroke="#34796f"/>
+    <circle cx="23" cy="21" r="5" fill="#72e6d1" filter="url(#softGlow)"/>
+    <text x="40" y="26" class="small" fill="#b9f4ea">LOCAL REAL-TIME · RTX GPU</text>
+  </g>
+
+  <rect x="60" y="150" width="1480" height="835" rx="28" fill="#0c1729" stroke="#24344f" stroke-width="1.5"/>
+  <text x="92" y="184" class="section">RUNTIME BOUNDARY · PYTHON / OPENCV / PYTORCH</text>
+
+  <!-- Lane backgrounds -->
+  <rect x="86" y="209" width="1428" height="205" rx="20" fill="#0e1b2d" stroke="#1d2d46"/>
+  <rect x="86" y="436" width="1428" height="223" rx="20" fill="#0e1b2d" stroke="#1d2d46"/>
+  <rect x="86" y="681" width="1428" height="184" rx="20" fill="#0e1b2d" stroke="#1d2d46"/>
+  <rect x="86" y="887" width="1428" height="70" rx="18" fill="#0b1424" stroke="#27354d" stroke-dasharray="6 7"/>
+
+  <text x="112" y="241" class="section">01 · INPUT &amp; INTERACTION</text>
+  <text x="112" y="468" class="section">02 · ROI-AWARE VISION</text>
+  <text x="112" y="713" class="section">03 · FILTER &amp; COMPOSITE</text>
+  <text x="112" y="914" class="section">ROADMAP · OPTIONAL EXTENSIONS</text>
+
+  <!-- Input lane nodes -->
+  <g transform="translate(118 267)">
+    <rect class="nodeMint" width="222" height="108"/>
+    <circle cx="31" cy="31" r="13" fill="#72e6d1" opacity="0.18"/>
+    <rect x="24" y="25" width="15" height="11" rx="3" fill="none" stroke="#72e6d1" stroke-width="2"/>
+    <path d="M39 28 L46 24 L46 37 L39 33" fill="none" stroke="#72e6d1" stroke-width="2" stroke-linejoin="round"/>
+    <text x="56" y="37" class="nodeTitle">Webcam Capture</text>
+    <text x="24" y="67" class="nodeBody">OpenCV VideoCapture</text>
+    <text x="24" y="89" class="small">BGR frame · timestamp</text>
+  </g>
+
+  <g transform="translate(416 267)">
+    <rect class="nodeMint" width="222" height="108"/>
+    <circle cx="31" cy="31" r="13" fill="#72e6d1" opacity="0.18"/>
+    <path d="M23 36 C26 23,31 21,32 34 M32 34 C35 18,40 19,39 35 M39 35 C43 22,48 24,46 39" fill="none" stroke="#72e6d1" stroke-width="2" stroke-linecap="round"/>
+    <text x="56" y="37" class="nodeTitle">Hand Tracking</text>
+    <text x="24" y="67" class="nodeBody">MediaPipe Hands</text>
+    <text x="24" y="89" class="small">21 landmarks · handedness</text>
+  </g>
+
+  <g transform="translate(714 267)">
+    <rect class="nodeMint" width="222" height="108"/>
+    <circle cx="31" cy="31" r="13" fill="#72e6d1" opacity="0.18"/>
+    <path d="M25 31 L31 25 L38 32 M31 25 L31 38" fill="none" stroke="#72e6d1" stroke-width="2" stroke-linecap="round"/>
+    <text x="56" y="37" class="nodeTitle">Gesture Parser</text>
+    <text x="24" y="67" class="nodeBody">pinch + debounce + smoothing</text>
+    <text x="24" y="89" class="small">normalized → pixel coords</text>
+  </g>
+
+  <g transform="translate(1012 257)">
+    <rect class="nodeBlue" width="354" height="128"/>
+    <text x="24" y="35" class="nodeTitle">ROI State Machine</text>
+    <text x="24" y="61" class="nodeBody">gesture event를 안정적인 화면 상태로 변환</text>
+    <g transform="translate(24 82)">
+      <rect width="57" height="24" rx="12" fill="#263a5d"/><text x="13" y="16" class="chip" fill="#b7c8e8">IDLE</text>
+      <text x="88" y="17" class="small">→</text>
+      <rect x="107" width="78" height="24" rx="12" fill="#263a5d"/><text x="119" y="16" class="chip" fill="#b7c8e8">DRAWING</text>
+      <text x="194" y="17" class="small">→</text>
+      <rect x="213" width="70" height="24" rx="12" fill="#263a5d"/><text x="226" y="16" class="chip" fill="#b7c8e8">LOCKED</text>
+    </g>
+  </g>
+
+  <!-- Vision lane nodes -->
+  <g transform="translate(180 505)">
+    <rect class="nodeBlue" width="230" height="112"/>
+    <text x="24" y="37" class="nodeTitle">ROI Crop</text>
+    <text x="24" y="68" class="nodeBody">locked rectangle로 frame crop</text>
+    <text x="24" y="91" class="small">x₁, y₁, x₂, y₂</text>
+  </g>
+
+  <g transform="translate(486 505)">
+    <rect class="nodePurple" width="230" height="112"/>
+    <text x="24" y="37" class="nodeTitle">YOLO Detector</text>
+    <text x="24" y="68" class="nodeBody">pretrained COCO inference</text>
+    <g transform="translate(24 82)">
+      <rect width="66" height="22" rx="11" fill="#3a2b5d"/><text x="15" y="15" class="chip" fill="#d8c8ff">person</text>
+      <text x="80" y="15" class="small">box · class · confidence</text>
+    </g>
+  </g>
+
+  <g transform="translate(792 505)">
+    <rect class="nodeBlue" width="230" height="112"/>
+    <text x="24" y="37" class="nodeTitle">Coordinate Remap</text>
+    <text x="24" y="68" class="nodeBody">ROI-local → full-frame</text>
+    <text x="24" y="91" class="small">global_box = local_box + ROI</text>
+  </g>
+
+  <g transform="translate(1098 505)">
+    <rect class="nodeBlue" width="268" height="112"/>
+    <text x="24" y="37" class="nodeTitle">Target Selector</text>
+    <text x="24" y="68" class="nodeBody">class / confidence / overlap 기준</text>
+    <text x="24" y="91" class="small">현재 MVP: person + bounding box</text>
+  </g>
+
+  <!-- Render lane nodes -->
+  <g transform="translate(340 731)">
+    <rect class="node" width="246" height="96"/>
+    <text x="24" y="35" class="nodeTitle">Filter Engine</text>
+    <text x="24" y="63" class="nodeBody">Blur · Pixelate · Gray · Edge</text>
+    <text x="24" y="82" class="small">target box 내부만 처리</text>
+  </g>
+
+  <g transform="translate(680 731)">
+    <rect class="node" width="246" height="96"/>
+    <text x="24" y="35" class="nodeTitle">Frame Compositor</text>
+    <text x="24" y="63" class="nodeBody">원본 frame + filtered patch</text>
+    <text x="24" y="82" class="small">clipping · alpha mask</text>
+  </g>
+
+  <g transform="translate(1020 719)">
+    <rect class="nodeOutput" width="346" height="120"/>
+    <circle cx="316" cy="30" r="6" fill="#72e6d1" filter="url(#softGlow)"/>
+    <text x="26" y="39" class="nodeTitle">Real-time Output</text>
+    <text x="26" y="69" class="nodeBody">ROI · box · class · confidence · FPS</text>
+    <text x="26" y="94" class="small">OpenCV window / demo recording</text>
+  </g>
+
+  <!-- Main data flows -->
+  <path class="flowMint" d="M340 321 H416"/>
+  <path class="flowMint" d="M638 321 H714"/>
+  <path class="flowMint" d="M936 321 H1012"/>
+  <path class="flow" d="M1189 385 V451 H295 V505"/>
+  <text x="1030" y="444" class="small">locked ROI</text>
+
+  <path class="flow" d="M229 375 V455 H245 V505"/>
+  <text x="138" y="446" class="small">latest frame</text>
+  <path class="flowMint" d="M410 561 H486"/>
+  <path class="flowMint" d="M716 561 H792"/>
+  <path class="flowMint" d="M1022 561 H1098"/>
+
+  <path class="flow" d="M1232 617 V672 H463 V731"/>
+  <text x="946" y="666" class="small">selected global box</text>
+  <path class="flowMint" d="M586 779 H680"/>
+  <path class="flowMint" d="M926 779 H1020"/>
+
+  <!-- Original frame bypass to compositor -->
+  <path class="flow" d="M160 375 V846 H803 V827"/>
+  <text x="176" y="837" class="small">original full frame</text>
+
+  <!-- Feedback loop -->
+  <path class="flowFuture" d="M1366 779 H1460 V250 H1366"/>
+  <text x="1403" y="498" class="small" transform="rotate(-90 1403 498)">visual feedback → next gesture</text>
+
+  <!-- Roadmap -->
+  <g transform="translate(330 906)">
+    <rect class="future" width="275" height="34"/>
+    <text x="18" y="22" class="chip" fill="#99aac5">PHASE 2 · OBJECT TRACKER / target_id</text>
+  </g>
+  <g transform="translate(663 906)">
+    <rect class="future" width="296" height="34"/>
+    <text x="18" y="22" class="chip" fill="#99aac5">PHASE 3 · INSTANCE SEGMENTATION / mask</text>
+  </g>
+  <g transform="translate(1017 906)">
+    <rect class="future" width="300" height="34"/>
+    <text x="18" y="22" class="chip" fill="#99aac5">PHASE 4 · ONNX / WEBGPU WEB CLIENT</text>
+  </g>
+  <path class="flowFuture" d="M605 923 H663"/>
+  <path class="flowFuture" d="M959 923 H1017"/>
+
+  <!-- Legend/footer -->
+  <g transform="translate(94 1023)">
+    <rect width="18" height="8" rx="4" fill="#72e6d1"/>
+    <text x="28" y="9" class="small">MVP 핵심 데이터 흐름</text>
+    <line x1="190" y1="4" x2="222" y2="4" stroke="#677793" stroke-width="2" stroke-dasharray="5 5"/>
+    <text x="232" y="9" class="small">후속 확장</text>
+  </g>
+  <text x="1505" y="1032" class="small" text-anchor="end">Architecture v1 · detectionFrame</text>
+</svg>
